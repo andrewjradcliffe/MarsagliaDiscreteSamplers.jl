@@ -137,8 +137,9 @@ function vsqhist_robinhood!(K::Vector{Int}, V::Vector{T}, q::Vector{T}, p::Vecto
         q[i] = p[i]
     end
     for _ = 1:n-1
-        qᵢ, i = vfindmin(q)
-        qⱼ, j = vfindmax(q)
+        # qᵢ, i = vfindmin(q)
+        # qⱼ, j = vfindmax(q)
+        ((qᵢ, i), (qⱼ, j))= vfindextrema(q)
         K[i] = j
         V[i] = (i - 1) * a + qᵢ
         q[j] = qⱼ - (a - qᵢ)
