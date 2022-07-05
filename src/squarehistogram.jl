@@ -154,29 +154,26 @@ function vsqhist_robinhood(p::Vector{T}) where {T<:AbstractFloat}
 end
 
 ################
-
-function sqhist(p::Vector{T}) where {T<:AbstractFloat}
+function sqhist!(K::Vector{Int}, V::Vector{T}, larges::Vector{Int}, smalls::Vector{Int}, q::Vector{T}, p::Vector{T}) where {T<:AbstractFloat}
     n = length(p)
-    K = Vector{Int}(undef, n)
-    V = Vector{promote_type(T, Float64)}(undef, n)
-    q = similar(p, promote_type(T, Float64))
+    checkbounds(larges, n)
+    checkbounds(smalls, n)
     a = inv(n)
-    larges = Vector{Int}(undef, n)
-    smalls = Vector{Int}(undef, n)
     kl = 0
     ks = 0
     # initialize
     @inbounds for i ∈ eachindex(K, V, p, q)
         K[i] = i
         V[i] = i * a
-        q[i] = p[i]
-        if p[i] > a
+        pᵢ = p[i]
+        q[i] = pᵢ
+        if pᵢ > a
             larges[kl+=1] = i
         else
             smalls[ks+=1] = i
         end
     end
-    while kl > 0 && ks > 0
+    @inbounds while kl > 0 && ks > 0
         j = larges[kl]; kl -= 1
         i = smalls[ks]; ks -= 1
         qᵢ = q[i]
@@ -192,4 +189,11 @@ function sqhist(p::Vector{T}) where {T<:AbstractFloat}
         end
     end
     K, V
+end
+sqhist!(K, V, q, p) = (n = length(p); sqhist!(K, V, Vector{Int}(undef, n), Vector{Int}(undef, n), q, p))
+
+function sqhist(p::Vector{T}) where {T<:AbstractFloat}
+    n = length(p)
+    K, V, q = _sqhist_init(promote_type(T, Float64), n)
+    sqhist!(K, V, q, p)
 end
