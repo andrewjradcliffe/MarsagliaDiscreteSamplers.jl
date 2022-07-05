@@ -100,4 +100,55 @@
 # isfeq.(qⱼ, qᵢ:qᵢ:n*qᵢ, a)
 # isfeq_big.(qⱼ, qᵢ:qᵢ:n*qᵢ, a)
 
+@inline _sqhist_init(T::Type{<:AbstractFloat}, n::Int) = Vector{Int}(undef, n), Vector{T}(undef, n), Vector{T}(undef, n)
 
+function sqhist_robinhood!(K::Vector{Int}, V::Vector{T}, q::Vector{T}, p::Vector{T}) where {T<:AbstractFloat}
+    n = length(p)
+    a = inv(n)
+    # initialize
+    @inbounds for i ∈ eachindex(K, V, p, q)
+        K[i] = i
+        V[i] = i * a
+        q[i] = p[i]
+    end
+    for _ = 1:n-1
+        qᵢ, i = findmin(q)
+        qⱼ, j = findmax(q)
+        K[i] = j
+        V[i] = (i - 1) * a + qᵢ
+        q[j] = qⱼ - (a - qᵢ)
+        q[i] = a
+    end
+    K, V
+end
+
+function sqhist_robinhood(p::Vector{T}) where {T<:AbstractFloat}
+    n = length(p)
+    K, V, q = _sqhist_init(promote_type(T, Float64), n)
+    sqhist_robinhood!(K, V, q, p)
+end
+
+function vsqhist_robinhood!(K::Vector{Int}, V::Vector{T}, q::Vector{T}, p::Vector{T}) where {T<:AbstractFloat}
+    n = length(p)
+    a = inv(n)
+    @turbo for i ∈ eachindex(K, V, p, q)
+        K[i] = i
+        V[i] = i * a
+        q[i] = p[i]
+    end
+    for _ = 1:n-1
+        qᵢ, i = vfindmin(q)
+        qⱼ, j = vfindmax(q)
+        K[i] = j
+        V[i] = (i - 1) * a + qᵢ
+        q[j] = qⱼ - (a - qᵢ)
+        q[i] = a
+    end
+    K, V
+end
+
+function vsqhist_robinhood(p::Vector{T}) where {T<:AbstractFloat}
+    n = length(p)
+    K, V, q = _sqhist_init(promote_type(T, Float64), n)
+    vsqhist_robinhood!(K, V, q, p)
+end
