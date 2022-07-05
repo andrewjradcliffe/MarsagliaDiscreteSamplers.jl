@@ -1,6 +1,12 @@
 using MarsagliaDiscreteSamplers
+using Random
 using Test
 
-@testset "MarsagliaDiscreteSamplers.jl" begin
-    # Write your tests here.
+const tests = [
+    "squarehistogram.jl",
+]
+for t in tests
+    @testset "Test $t" begin
+        include(t)
+    end
 end
