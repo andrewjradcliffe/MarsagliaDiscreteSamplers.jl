@@ -1,5 +1,5 @@
 #
-Random.seed!(0x123456789abcdef)
+Random.seed!(0xf123456789abcdef)
 
 # Helper functions
 function unsafe_countcategory!(v::AbstractArray, A::AbstractArray)
@@ -216,7 +216,7 @@ end
         @test all(i -> ≈(t[i] * c, p[i], atol=1e-3), 1:n)
         # @test all((≈).(t .* c, p, atol=1e-3))
         @test all(∈(1:n), A)
-        for _ = 1:10
+        for _ = 1:2
             rand!(p)
             _normalize1!(p)
             K, V = sqhist(p)
