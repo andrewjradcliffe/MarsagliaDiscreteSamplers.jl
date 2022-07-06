@@ -13,6 +13,8 @@ K2, V2 = sqhist_robinhood(p);
 Av = view(A, 1:100);
 uv = view(u, 1:100);
 
+M = ones(Int, 100,2^10);
+Mv = view(M, 1, :);
 
 @benchmark generate!($A, $u, $K, $V)
 @benchmark generate_v2!($A, $u, $K, $V)
@@ -22,6 +24,15 @@ uv = view(u, 1:100);
 @benchmark generate_v2!($Av, $uv, $K, $V)
 @benchmark vgenerate!($Av, $uv, $K, $V)
 @benchmark vgenerate_v2!($Av, $uv, $K, $V)
+
+@benchmark generate!($Mv, $u, $K, $V)
+@benchmark generate_v2!($Mv, $u, $K, $V)
+@benchmark vgenerate!($Mv, $u, $K, $V)
+
+generate!(Mv, u, K, V);
+Mv0 = deepcopy(Mv);
+vgenerate!(Mv, u, K, V);
+Mv0 == Mv
 
 A1 = generate!(similar(A), u, K, V);
 A2 = generate_v2!(similar(A), u, K, V);
@@ -41,3 +52,20 @@ end
 
 @code_native generate!(A, u, K, V)
 @code_native generate2!(A, u, K, V)
+
+v = 1
+@benchmark vfill!($A, $v)
+
+n = 2^10
+@benchmark generate!($A, $u, $n)
+@benchmark vgenerate!($A, $u, $n)
+ur = 1:n
+@benchmark rand!($A, $ur)
+
+@benchmark generate($n)
+@benchmark generate_v2($n)
+
+
+@benchmark generate!($Mv, $u, $n)
+@benchmark vgenerate!($Mv, $u, $n)
+
