@@ -192,6 +192,7 @@ function sqhist!(K::Vector{Int}, V::Vector{T}, larges::Vector{Int}, smalls::Vect
     K, V
 end
 sqhist!(K, V, q, p) = (n = length(p); sqhist!(K, V, Vector{Int}(undef, n), Vector{Int}(undef, n), q, p))
+sqhist!(K, V, p) = sqhist!(K, V, similar(p), p)
 
 function sqhist(p::Vector{T}) where {T<:AbstractFloat}
     n = length(p)
@@ -200,8 +201,8 @@ function sqhist(p::Vector{T}) where {T<:AbstractFloat}
 end
 
 # An optimized case, but why it would be used is questionable
-function sqhist!(K::Vector{Int}, V::Vector{T}, n::Int) where {T<:AbstractFloat}
-    n == length(K) == length(V) || throw(ArgumentError("n must be equal to length(K) and length(V) "))
+function sqhist!(K::Vector{Int}, V::Vector{T}) where {T<:AbstractFloat}
+    n = length(K)
     a = inv(n)
     @inbounds @simd for i ∈ eachindex(K, V)
         K[i] = i
@@ -209,6 +210,7 @@ function sqhist!(K::Vector{Int}, V::Vector{T}, n::Int) where {T<:AbstractFloat}
     end
     K, V
 end
+sqhist!(K::Vector{Int}, V::Vector{<:AbstractFloat}, n::Int) = sqhist!(resize!(K, n), resize!(V, n))
 
 ################
 # Interface -- for convenience of holding items together
@@ -221,6 +223,9 @@ SqHist(p::Vector{<:AbstractFloat}) = SqHist(sqhist(p)...)
 Base.length(x::SqHist) = length(x.K)
 Base.getindex(x::SqHist, i) = x.K[i], x.V[i]
 Base.getindex(x::SqHist, ::Colon) = x.K, x.V
+Base.:(==)(x::SqHist, y::SqHist) = x.K == y.K && x.V == y.V
+Base.hash(x::SqHist, h::UInt) = hash(x.K, hash(x.V, h))
+Base.resize!(x::SqHist, n::Int) = (resize!(x.K, n); resize!(x.V, n); x)
 
 struct SqHistEquiprobable{T<:Integer}
     n::T
@@ -229,3 +234,10 @@ Base.length(x::SqHistEquiprobable) = x.n
 Base.getindex(x::SqHistEquiprobable, i::Integer) = (checkindex(Bool, 1:x.n, i); (i, i / x.n))
 Base.getindex(x::SqHistEquiprobable, i) = (checkbounds(1:x.n, i); a = inv(x.n); (i, i .* a))
 Base.getindex(x::SqHistEquiprobable, ::Colon) = (a = inv(x.n); i = 1:x.n; (i, i .* a))
+Base.:(==)(x::SqHistEquiprobable, y::SqHistEquiprobable) = x.n == y.n
+Base.hash(x::SqHistEquiprobable, h::UInt) = hash(x.n, h)
+
+# maybe?
+sqhist!(x::SqHist, L, S, q, p) = sqhist!(x.K, x.V, L, S, q, p)
+sqhist!(x::SqHist, q, p) = sqhist!(x.K, x.V, q, p)
+sqhist!(x::SqHist, p) = sqhist!(x.K, x.V, p)
