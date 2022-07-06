@@ -73,7 +73,6 @@ vgenerate(K::Vector{Int}, V::Vector{<:AbstractFloat}, dims::NTuple{N, Int}) wher
 vgenerate(K::Vector{Int}, V::Vector{<:AbstractFloat}, dims::Vararg{Int, N}) where {N} =
     vgenerate(K, V, dims)
 
-
 ################
 # Equal probability case admits an optimized form:
 # U ~ Uniform(0,1)
@@ -115,6 +114,10 @@ vgenerate!(A::AbstractArray, n::Int) = vgenerate!(A, similar(A, Float64), n)
 vgenerate(n::Int, dims::NTuple{N, Int}) where {N} = vgenerate!(Array{Int}(undef, dims), n)
 vgenerate(n::Int, dims::Vararg{Int, N}) where {N} = vgenerate(n, dims)
 
+####
+# ugly, but makes @turbo generation case behave like base
+vgenerate(K::Vector{Int}, V::Vector{<:AbstractFloat}, dims::Tuple{}) = generate(K, V, ())
+vgenerate(n::Int, dims::Tuple{}) = generate(n, ())
 
 ################################################################
 # Interface -- for convenience of sampling
