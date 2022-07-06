@@ -42,8 +42,10 @@ end
 
 generate!(A::AbstractArray{<:Integer}, K::Vector{Int}, V::Vector{T}) where {T<:AbstractFloat} = generate!(A, similar(A, Float64), K, V)
 
-generate(K::Vector{Int}, V::Vector{T}, dims::Vararg{Int, N}) where {T<:AbstractFloat} where {N} =
+generate(K::Vector{Int}, V::Vector{<:AbstractFloat}, dims::NTuple{N, Int}) where {N} =
     generate!(Array{Int}(undef, dims), K, V)
+generate(K::Vector{Int}, V::Vector{<:AbstractFloat}, dims::Vararg{Int, N}) where {N} =
+    generate(K, V, dims)
 
 ################
 # Why bother with @turbo? Well, unless one can guarantee that @simd ivdep is safe,
@@ -65,8 +67,10 @@ end
 vgenerate!(A::AbstractArray{<:Integer}, K::Vector{Int}, V::Vector{T}) where {T<:AbstractFloat} =
     vgenerate!(A, similar(A, Float64), K, V)
 
-vgenerate(K::Vector{Int}, V::Vector{T}, dims::Vararg{Int, N}) where {T<:AbstractFloat} where {N} =
+vgenerate(K::Vector{Int}, V::Vector{<:AbstractFloat}, dims::NTuple{N, Int}) where {N} =
     vgenerate!(Array{Int}(undef, dims), K, V)
+vgenerate(K::Vector{Int}, V::Vector{<:AbstractFloat}, dims::Vararg{Int, N}) where {N} =
+    vgenerate(K, V, dims)
 
 
 ################
@@ -95,12 +99,6 @@ generate(n::Int, dims::Vararg{Int, N}) where {N} = generate(n, dims)
 
 ################
 vgenerate(n::Int) = generate(n)
-function vfill!(A::AbstractArray, v::Real)
-    @turbo for i ∈ eachindex(A)
-        A[i] = v
-    end
-    A
-end
 
 function vgenerate!(A::AbstractArray{<:Integer}, u::AbstractArray{Float64}, n::Int)
     n > 0 || throw(ArgumentError("n must be > 0"))
