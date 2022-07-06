@@ -29,6 +29,7 @@ end
 function generate!(A::Array{<:Integer}, u::Array{Float64}, K::Vector{Int}, V::Vector{T}) where {T<:AbstractFloat}
     n = length(K)
     checkbounds(V, n)
+    n == 1 && return fill!(A, @inbounds K[1])
     rand!(u)
     @inbounds @simd ivdep for i ∈ eachindex(A, u)
         # j = unsafe_trunc(Int, muladd(u[i], n, 1.0))
@@ -52,6 +53,7 @@ vgenerate(K::Vector{Int}, V::Vector{<:AbstractFloat}) = generate(K, V)
 function vgenerate!(A::AbstractArray{<:Integer}, u::AbstractArray{Float64}, K::Vector{Int}, V::Vector{T}) where {T<:AbstractFloat}
     n = length(K)
     checkbounds(V, n)
+    n == 1 && return vfill!(A, @inbounds K[1])
     rand!(u)
     @turbo for i ∈ eachindex(A, u)
         # j = unsafe_trunc(Int, muladd(u[i], n, 1.0))
