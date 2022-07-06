@@ -7,9 +7,10 @@
 
 function generate(K::Vector{Int}, V::Vector{T}) where {T<:AbstractFloat}
     n = length(K)
+    checkbounds(V, n)
     u = rand()
     j = unsafe_trunc(Int, u * n) + 1
-    u < V[j] ? j : K[j]
+    @inbounds u < V[j] ? j : K[j]
 end
 
 function generate!(A::AbstractArray{<:Integer}, u::AbstractArray{Float64}, K::Vector{Int}, V::Vector{T}) where {T<:AbstractFloat}
