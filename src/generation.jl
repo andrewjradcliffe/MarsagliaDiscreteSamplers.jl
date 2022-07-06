@@ -113,3 +113,30 @@ vgenerate!(A::AbstractArray, n::Int) = vgenerate!(A, similar(A, Float64), n)
 
 vgenerate(n::Int, dims::NTuple{N, Int}) where {N} = vgenerate!(Array{Int}(undef, dims), n)
 vgenerate(n::Int, dims::Vararg{Int, N}) where {N} = vgenerate(n, dims)
+
+
+################################################################
+# Interface -- for convenience of sampling
+generate(x::SqHist) = generate(x.K, x.V)
+generate(x::SqHist, dims::NTuple{N, Int}) where {N} = generate(x.K, x.V, dims)
+generate(x::SqHist, dims::Vararg{Int, N}) where {N} = generate(x, dims)
+generate!(A, u, x::SqHist) = generate!(A, u, x.K, x.V)
+generate!(A, x::SqHist) = generate!(A, x.K, x.V)
+
+generate(x::SqHistEquiprobable) = generate(x.n)
+generate(x::SqHistEquiprobable, dims::NTuple{N, Int}) where {N} = generate(x.n, dims)
+generate(x::SqHistEquiprobable, dims::Vararg{Int, N}) where {N} = generate(x, dims)
+generate!(A, u, x::SqHistEquiprobable) = generate!(A, u, x.n)
+generate!(A, x::SqHistEquiprobable) = generate!(A, x.n)
+
+vgenerate(x::SqHist) = vgenerate(x.K, x.V)
+vgenerate(x::SqHist, dims::NTuple{N, Int}) where {N} = vgenerate(x.K, x.V, dims)
+vgenerate(x::SqHist, dims::Vararg{Int, N}) where {N} = vgenerate(x, dims)
+vgenerate!(A, u, x::SqHist) = vgenerate!(A, u, x.K, x.V)
+vgenerate!(A, x::SqHist) = vgenerate!(A, x.K, x.V)
+
+vgenerate(x::SqHistEquiprobable) = vgenerate(x.n)
+vgenerate(x::SqHistEquiprobable, dims::NTuple{N, Int}) where {N} = vgenerate(x.n, dims)
+vgenerate(x::SqHistEquiprobable, dims::Vararg{Int, N}) where {N} = vgenerate(x, dims)
+vgenerate!(A, u, x::SqHistEquiprobable) = vgenerate!(A, u, x.n)
+vgenerate!(A, x::SqHistEquiprobable) = vgenerate!(A, x.n)

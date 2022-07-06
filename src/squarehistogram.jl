@@ -198,3 +198,34 @@ function sqhist(p::Vector{T}) where {T<:AbstractFloat}
     K, V, q = _sqhist_init(promote_type(T, Float64), n)
     sqhist!(K, V, q, p)
 end
+
+# An optimized case, but why it would be used is questionable
+function sqhist!(K::Vector{Int}, V::Vector{T}, n::Int) where {T<:AbstractFloat}
+    n == length(K) == length(V) || throw(ArgumentError("n must be equal to length(K) and length(V) "))
+    a = inv(n)
+    @inbounds @simd for i ∈ eachindex(K, V)
+        K[i] = i
+        V[i] = i * a
+    end
+    K, V
+end
+
+################
+# Interface -- for convenience of holding items together
+struct SqHist{Ti<:Integer, Tv<:AbstractFloat}
+    K::Vector{Ti}
+    V::Vector{Tv}
+end
+SqHist(p::Vector{<:AbstractFloat}) = SqHist(sqhist(p)...)
+
+Base.length(x::SqHist) = length(x.K)
+Base.getindex(x::SqHist, i) = x.K[i], x.V[i]
+Base.getindex(x::SqHist, ::Colon) = x.K, x.V
+
+struct SqHistEquiprobable{T<:Integer}
+    n::T
+end
+Base.length(x::SqHistEquiprobable) = x.n
+Base.getindex(x::SqHistEquiprobable, i::Integer) = (checkindex(Bool, 1:x.n, i); (i, i / x.n))
+Base.getindex(x::SqHistEquiprobable, i) = (checkbounds(1:x.n, i); a = inv(x.n); (i, i .* a))
+Base.getindex(x::SqHistEquiprobable, ::Colon) = (a = inv(x.n); i = 1:x.n; (i, i .* a))
