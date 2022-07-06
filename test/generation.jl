@@ -229,3 +229,220 @@ end
         end
     end
 end
+
+################
+@testset "vgenerate: general case" begin
+    p = [2/15, 7/15, 6/15]
+    K, V = sqhist(p)
+    A = vgenerate(K, V, 1,2,3);
+    mn, mx = extrema(A)
+    @test mn ≥ 1 && mx ≤ 3
+    @test all(1 ≤ vgenerate(K, V) ≤ 3 for _ = 1:10^4)
+    A = vgenerate(K, V, 10^7);
+    t = unsafe_countcategory(A, 3)
+    @test all((≈).(t ./ 10^7, p, atol=1e-3))
+    @test all(in13, A)
+    u = Vector{Float64}(undef, 10)
+    @test_throws DimensionMismatch vgenerate!(A, u, K, V)
+    resize!(u, length(A))
+    vgenerate!(A, u, K, V)
+    t = unsafe_countcategory(A, 3)
+    @test all((≈).(t ./ 10^7, p, atol=1e-3))
+    @test all(in13, A)
+    # multidimensional initialization
+    @test all(in13, A)
+    for dims ∈ (0, 1, 2, (), (1,), (1,2), (1,1,3), (3,2,4), (1,2,3,4))
+        A = vgenerate(K, V, dims)
+        @test all(in13, A)
+    end
+    # views
+    M = zeros(Int, 7, 5)
+    for i_1 = 1:7
+        Mv = view(M, i_1, :)
+        resize!(u, length(Mv))
+        vgenerate!(Mv, u, K, V)
+        @test all(!=(0), Mv)
+        @test all(in13, Mv)
+        Mv .= 0
+    end
+    for i_2 = 1:5
+        Mv = view(M, :, i_2)
+        resize!(u, length(Mv))
+        vgenerate!(Mv, u, K, V)
+        @test all(!=(0), Mv)
+        @test all(in13, Mv)
+        Mv .= 0
+    end
+    for (s_1, s_2) ∈ ((1:3, 1:2), (4:6, 3:5), (2:5, 1:3), (1:2:4, 1:2), (1:3:7, 1:2:5))
+        Mv = view(M, s_1, s_2)
+        u = similar(Mv, Float64)
+        vgenerate!(Mv, u, K, V)
+        @test all(!=(0), Mv)
+        @test all(in13, Mv)
+        Mv .= 0
+    end
+    # throws based on K, V
+    for n = 0:2
+        resize!(V, n)
+        @test_throws BoundsError vgenerate(K, V)
+        @test_throws BoundsError vgenerate(K, V, 1, 2)
+        for dims ∈ (0, 1, 2, (), (1,), (1,2))
+            @test_throws BoundsError vgenerate(K, V, dims)
+        end
+        @test_throws BoundsError vgenerate!(A, K, V)
+    end
+    resize!(V, 3)
+    for n = (0, 4)
+        resize!(K, n)
+        @test_throws BoundsError vgenerate(K, V)
+        @test_throws BoundsError vgenerate(K, V, 1, 2)
+        for dims ∈ (0, 1, 2, (), (1,), (1,2))
+            @test_throws BoundsError vgenerate(K, V, dims)
+        end
+        @test_throws BoundsError vgenerate!(A, K, V)
+    end
+end
+
+@testset "vgenerate: SqHist interface" begin
+    p = [2/15, 7/15, 6/15]
+    K, V = sqhist(p)
+    x = SqHist(p)
+    A = vgenerate(x, 1,2,3);
+    mn, mx = extrema(A)
+    @test mn ≥ 1 && mx ≤ 3
+    @test all(1 ≤ vgenerate(x) ≤ 3 for _ = 1:10^4)
+    A = vgenerate(x, 10^7);
+    t = unsafe_countcategory(A, 3)
+    @test all((≈).(t ./ 10^7, p, atol=1e-3))
+    @test all(in13, A)
+    u = Vector{Float64}(undef, 10)
+    @test_throws DimensionMismatch vgenerate!(A, u, x)
+    resize!(u, length(A))
+    vgenerate!(A, u, x)
+    t = unsafe_countcategory(A, 3)
+    @test all((≈).(t ./ 10^7, p, atol=1e-3))
+    @test all(in13, A)
+    # multidimensional initialization
+    @test all(in13, A)
+    for dims ∈ (0, 1, 2, (), (1,), (1,2), (1,1,3), (3,2,4), (1,2,3,4))
+        A = vgenerate(x, dims)
+        @test all(in13, A)
+    end
+end
+
+@testset "vgenerate: equal probability" begin
+    K, V = [1,2,3], [1/3, 2/3, 3/3]
+    p = [1/3, 1/3, 1/3]
+    n = 3
+    A = vgenerate(n, 1,2,3);
+    mn, mx = extrema(A)
+    @test mn ≥ 1 && mx ≤ 3
+    @test all(1 ≤ vgenerate(n) ≤ 3 for _ = 1:10^4)
+    A = vgenerate(n, 10^7);
+    t = unsafe_countcategory(A, 3)
+    @test all((≈).(t ./ 10^7, p, atol=1e-3))
+    @test all(in13, A)
+    u = Vector{Float64}(undef, 10)
+    @test_throws DimensionMismatch vgenerate!(A, u, n)
+    resize!(u, length(A))
+    vgenerate!(A, u, n)
+    t = unsafe_countcategory(A, 3)
+    @test all((≈).(t ./ 10^7, p, atol=1e-3))
+    @test all(in13, A)
+    # multidimensional initialization
+    @test all(in13, A)
+    for dims ∈ (0, 1, 2, (), (1,), (1,2), (1,1,3), (3,2,4), (1,2,3,4))
+        A = vgenerate(n, dims)
+        @test all(in13, A)
+    end
+    # views
+    M = zeros(Int, 7, 5)
+    for i_1 = 1:7
+        Mv = view(M, i_1, :)
+        resize!(u, length(Mv))
+        vgenerate!(Mv, u, n)
+        @test all(!=(0), Mv)
+        @test all(in13, Mv)
+        Mv .= 0
+    end
+    for i_2 = 1:5
+        Mv = view(M, :, i_2)
+        resize!(u, length(Mv))
+        vgenerate!(Mv, u, n)
+        @test all(!=(0), Mv)
+        @test all(in13, Mv)
+        Mv .= 0
+    end
+    for (s_1, s_2) ∈ ((1:3, 1:2), (4:6, 3:5), (2:5, 1:3), (1:2:4, 1:2), (1:3:7, 1:2:5))
+        Mv = view(M, s_1, s_2)
+        u = similar(Mv, Float64)
+        vgenerate!(Mv, u, n)
+        @test all(!=(0), Mv)
+        @test all(in13, Mv)
+        Mv .= 0
+    end
+    # throws based on n
+    @test_throws ArgumentError vgenerate(0)
+    @test_throws ArgumentError vgenerate(0, 1, 2)
+    for dims ∈ (0, 1, 2, (), (1,), (1,2))
+        @test_throws ArgumentError vgenerate(0, dims)
+    end
+    @test_throws ArgumentError vgenerate!(A, 0)
+end
+
+@testset "vgenerate: SqHistEquiprobable interface" begin
+    K, V = [1,2,3], [1/3, 2/3, 3/3]
+    p = [1/3, 1/3, 1/3]
+    n = 3
+    x = SqHistEquiprobable(n)
+    A = vgenerate(x, 1,2,3);
+    mn, mx = extrema(A)
+    @test mn ≥ 1 && mx ≤ 3
+    @test all(1 ≤ vgenerate(x) ≤ 3 for _ = 1:10^4)
+    A = vgenerate(x, 10^7);
+    t = unsafe_countcategory(A, 3)
+    @test all((≈).(t ./ 10^7, p, atol=1e-3))
+    @test all(in13, A)
+    u = Vector{Float64}(undef, 10)
+    @test_throws DimensionMismatch vgenerate!(A, u, x)
+    resize!(u, length(A))
+    vgenerate!(A, u, x)
+    t = unsafe_countcategory(A, 3)
+    @test all((≈).(t ./ 10^7, p, atol=1e-3))
+    @test all(in13, A)
+    # multidimensional initialization
+    @test all(in13, A)
+    for dims ∈ (0, 1, 2, (), (1,), (1,2), (1,1,3), (3,2,4), (1,2,3,4))
+        A = vgenerate(x, dims)
+        @test all(in13, A)
+    end
+end
+
+@testset "sqhist, vgenerate: numerical stability" begin
+    n_samples = 10^8
+    c = inv(n_samples)
+    A = Vector{Int}(undef, n_samples)
+    u = Vector{Float64}(undef, n_samples)
+    for i = 1:15
+        n = (1 << i)
+        p = fill(1/n, n)
+        K, V = sqhist(p)
+        @test 1 ≤ vgenerate(K, V) ≤ n
+        vgenerate!(A, u, K, V)
+        t = unsafe_countcategory(A, n);
+        @test all(i -> ≈(t[i] * c, p[i], atol=1e-3), 1:n)
+        # @test all((≈).(t .* c, p, atol=1e-3))
+        @test all(∈(1:n), A)
+        for _ = 1:2
+            rand!(p)
+            _normalize1!(p)
+            K, V = sqhist(p)
+            @test 1 ≤ vgenerate(K, V) ≤ n
+            vgenerate!(A, u, K, V)
+            t = unsafe_countcategory(A, n);
+            @test all(i -> ≈(t[i] * c, p[i], atol=1e-3), 1:n)
+            # @test all((≈).(t .* c, p, atol=1e-3))
+            @test all(∈(1:n), A)
+        end
+    end
+end
