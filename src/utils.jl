@@ -21,4 +21,12 @@ function vfindextrema(f::F, initmin::Iₘᵢₙ, initmax::Iₘₐₓ, A::Abstrac
     ((mn, i_mn), (mx, i_mx))
 end
 vfindextrema(f, A) = vfindextrema(f, typemax, typemin, A)
-vfindextrema(A) = vfindextrema(identity, typemax, typemin, A)
+vfindextrema(A) = vfindextrema(identity, A)
+
+# Sometimes more performant than fill!
+function vfill!(A::AbstractArray, v::Real)
+    @turbo for i ∈ eachindex(A)
+        A[i] = v
+    end
+    A
+end
