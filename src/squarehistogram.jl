@@ -227,11 +227,37 @@ Base.:(==)(x::SqHist, y::SqHist) = x.K == y.K && x.V == y.V
 Base.hash(x::SqHist, h::UInt) = hash(x.K, hash(x.V, h))
 Base.resize!(x::SqHist, n::Int) = (resize!(x.K, n); resize!(x.V, n); x)
 
+"""
+    SqHistEquiprobable(n::Int)
+
+Construct an efficient representation of the square histogram which corresponds to
+`n` ≥ 1 categories of equal probability mass.
+
+# Examples
+julia> x = SqHistEquiprobable(3)
+SqHistEquiprobable{Int64}(3)
+
+julia> x[:]
+(1:3, 0.3333333333333333:0.3333333333333333:1.0)
+
+julia> K, V = map(collect, x[:])    # the literal version
+([1, 2, 3], [0.3333333333333333, 0.6666666666666666, 1.0])
+"""
 struct SqHistEquiprobable{T<:Integer}
     n::T
+    function SqHistEquiprobable{T}(x) where {T<:Integer}
+        x > 0 || throw(ArgumentError("n must be > 0"))
+        new(x)
+    end
 end
+SqHistEquiprobable(x::T) where {T<:Integer} = SqHistEquiprobable{T}(x)
+
+Base.convert(::Type{SqHistEquiprobable{T}}, x::SqHistEquiprobable) where {T<:Integer} =
+    SqHistEquiprobable{T}(x.n)
+Base.convert(::Type{SqHistEquiprobable{T}}, x::SqHistEquiprobable{T}) where {T<:Integer} = x
+
 Base.length(x::SqHistEquiprobable) = x.n
-Base.getindex(x::SqHistEquiprobable, i::Integer) = (checkindex(Bool, 1:x.n, i); (i, i / x.n))
+Base.getindex(x::SqHistEquiprobable, i::Integer) = (checkbounds(1:x.n, i); (i, i / x.n))
 Base.getindex(x::SqHistEquiprobable, i) = (checkbounds(1:x.n, i); a = inv(x.n); (i, i .* a))
 Base.getindex(x::SqHistEquiprobable, ::Colon) = (a = inv(x.n); i = 1:x.n; (i, i .* a))
 Base.:(==)(x::SqHistEquiprobable, y::SqHistEquiprobable) = x.n == y.n
