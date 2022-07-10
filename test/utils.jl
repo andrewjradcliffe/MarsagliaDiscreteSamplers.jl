@@ -1,4 +1,6 @@
 # Basic utils tests
+import MarsagliaDiscreteSamplers: vfindextrema, vfill!
+
 @testset "vfindextrema(f, domain)" begin
     @test vfindextrema(-, 1:10) == (findmin(-, 1:10), findmax(-, 1:10))
     @test vfindextrema(identity, [1, NaN, 3]) == ((1.0, 1), (3.0, 3))
