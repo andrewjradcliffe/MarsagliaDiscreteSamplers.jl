@@ -286,55 +286,7 @@ function sqhist!(K::Vector{Int}, V::Vector{T}, larges::Vector{Int}, smalls::Vect
     K, V
 end
 
-"""
-    sqhist!(K::Vector{Int}, V::Vector{<:AbstractFloat}, q, p)
-
-Construct into `K` and `V` a square histogram given a vector of probabilities, `p`,
-which satisfies ∑ᵢpᵢ = 1 and 0 ≤ pᵢ ≤ 1 ∀i.
-`q` is temporary storage, which will be overwritten, of the same type and size as `p`.
-Repeat callers are encouraged to pre-allocate temporary storage once, and call through
-`sqhist!(K, V, L, S, q, p)`
-
-# Examples
-```jldoctest
-julia> p = [2/15, 7/15, 6/15];
-
-julia> K = similar(p, Int); V = similar(p, Float64); q = zeros(3)
-3-element Vector{Float64}:
- 0.0
- 0.0
- 0.0
-
-julia> sqhist!(K, V, q, p)
-([3, 2, 2], [0.13333333333333333, 0.6666666666666666, 0.8666666666666667])
-
-julia> q
-3-element Vector{Float64}:
- 0.3333333333333333
- 0.33333333333333337
- 0.3333333333333333
-```
-"""
 sqhist!(K, V, q, p) = (n = length(p); sqhist!(K, V, Vector{Int}(undef, n), Vector{Int}(undef, n), q, p))
-
-"""
-    sqhist!(K::Vector{Int}, V::Vector{<:AbstractFloat}, p)
-
-Construct into `K` and `V` a square histogram given a vector of probabilities, `p`,
-which satisfies ∑ᵢpᵢ = 1 and 0 ≤ pᵢ ≤ 1 ∀i.
-Repeat callers are encouraged to pre-allocate temporary storage once, and call through
-`sqhist!(K, V, L, S, q, p)`
-
-# Examples
-```jldoctest
-julia> p = [2/15, 7/15, 6/15];
-
-julia> K = similar(p, Int); V = similar(p, Float64);
-
-julia> sqhist!(K, V, p)
-([3, 2, 2], [0.13333333333333333, 0.6666666666666666, 0.8666666666666667])
-```
-"""
 sqhist!(K, V, p) = sqhist!(K, V, similar(p), p)
 
 """
