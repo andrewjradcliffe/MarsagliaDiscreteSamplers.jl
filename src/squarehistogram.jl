@@ -102,6 +102,33 @@
 
 @inline _sqhist_init(T::Type{<:AbstractFloat}, n::Int) = Vector{Int}(undef, n), Vector{T}(undef, n), Vector{T}(undef, n)
 
+"""
+    sqhist_robinhood!(K::Vector{Int}, V::Vector{<:AbstractFloat}, q, p)
+
+Construct into `K` and `V` a square histogram using the Robin Hood method,
+given a vector of probabilities, `p`, which satisfies ∑ᵢpᵢ = 1 and 0 ≤ pᵢ ≤ 1 ∀i.
+`q` is temporary storage, which will be overwritten, of the same type and size as `p`.
+
+# Examples
+```jldoctest
+julia> p = [2/15, 7/15, 6/15];
+
+julia> K = similar(p, Int); V = similar(p, Float64); q = zeros(3)
+3-element Vector{Float64}:
+ 0.0
+ 0.0
+ 0.0
+
+julia> sqhist_robinhood!(K, V, q, p)
+([2, 3, 3], [0.13333333333333333, 0.6000000000000001, 1.0])
+
+julia> q
+3-element Vector{Float64}:
+ 0.3333333333333333
+ 0.3333333333333333
+ 0.3333333333333334
+```
+"""
 function sqhist_robinhood!(K::Vector{Int}, V::Vector{T}, q::Vector{T}, p::Vector{T}) where {T<:AbstractFloat}
     n = length(p)
     a = inv(n)
@@ -122,6 +149,47 @@ function sqhist_robinhood!(K::Vector{Int}, V::Vector{T}, q::Vector{T}, p::Vector
     K, V
 end
 
+"""
+    sqhist_robinhood!(K::Vector{Int}, V::Vector{<:AbstractFloat}, p)
+
+Construct into `K` and `V` a square histogram using the Robin Hood method,
+given a vector of probabilities, `p`, which satisfies ∑ᵢpᵢ = 1 and 0 ≤ pᵢ ≤ 1 ∀i.
+Repeat callers are encouraged to pre-allocate temporary storage once, and call through
+`sqhist_robinhood!(K, V, q, p)`
+
+# Examples
+```jldoctest
+julia> p = [2/15, 7/15, 6/15];
+
+julia> K = similar(p, Int); V = similar(p, Float64);
+
+julia> sqhist_robinhood!(K, V, p)
+([2, 3, 3], [0.13333333333333333, 0.6000000000000001, 1.0])
+```
+"""
+sqhist_robinhood!(K, V, p) = sqhist_robinhood!(K, V, similar(p), p)
+
+"""
+    sqhist_robinhood(p::Vector{<:AbstractFloat})
+
+Construct a square histogram using the Robin Hood method, given a vector of probabilities,
+`p`, which satisfies ∑ᵢpᵢ = 1 and 0 ≤ pᵢ ≤ 1 ∀i. This algorithm requires 𝒪(N²) time, but
+produces a square histogram which has fewer column pivots than `sqhist`, potentially
+leading to gains in generation efficiency due to decreased probability of the `else`
+branch occurring. As all generation algorithms are vectorized, this will have no effect
+as both branches will be evaluated unconditionally. Consequently, there is little reason
+to utilize this algorithm.
+
+See also: [`sqhist_robinhood!`](@ref)
+
+# Examples
+```jldoctest
+julia> p = [2/15, 7/15, 6/15];
+
+julia> sqhist_robinhood(p)
+([2, 3, 3], [0.13333333333333333, 0.6000000000000001, 1.0])
+```
+"""
 function sqhist_robinhood(p::Vector{T}) where {T<:AbstractFloat}
     n = length(p)
     K, V, q = _sqhist_init(promote_type(T, Float64), n)
@@ -155,6 +223,30 @@ function vsqhist_robinhood(p::Vector{T}) where {T<:AbstractFloat}
 end
 
 ################
+
+"""
+    sqhist!(K::Vector{Int}, V::Vector{<:AbstractFloat}, L::Vector{Int}, S::Vector{Int}, q, p)
+
+Construct into `K` and `V` a square histogram given a vector of probabilities, `p`,
+which satisfies ∑ᵢpᵢ = 1 and 0 ≤ pᵢ ≤ 1 ∀i.
+`L` and `S` are temporary storage, which will be overwritten, of the same size and type as `K`.
+`q` is temporary storage, which will be overwritten, of the same type and size as `p`.
+Repeat callers are encouraged to pre-allocate temporary storage once, and call through
+`sqhist!(K, V, L, S, q, p)`
+
+# Examples
+```jldoctest
+julia> p = [2/15, 7/15, 6/15];
+
+julia> K = zeros(Int, 3); V = zeros(3); L = zeros(Int, 3); S = zeros(Int, 3); q = zeros(3);
+
+julia> sqhist!(K, V, L, S, q, p)
+([3, 2, 2], [0.13333333333333333, 0.6666666666666666, 0.8666666666666667])
+
+julia> L, S, q
+([2, 3, 0], [3, 0, 0], [0.3333333333333333, 0.33333333333333337, 0.3333333333333333])
+```
+"""
 function sqhist!(K::Vector{Int}, V::Vector{T}, larges::Vector{Int}, smalls::Vector{Int}, q::Vector{T}, p::Vector{T}) where {T<:AbstractFloat}
     n = length(p)
     checkbounds(larges, n)
@@ -191,9 +283,78 @@ function sqhist!(K::Vector{Int}, V::Vector{T}, larges::Vector{Int}, smalls::Vect
     end
     K, V
 end
+
+"""
+    sqhist!(K::Vector{Int}, V::Vector{<:AbstractFloat}, q, p)
+
+Construct into `K` and `V` a square histogram given a vector of probabilities, `p`,
+which satisfies ∑ᵢpᵢ = 1 and 0 ≤ pᵢ ≤ 1 ∀i.
+`q` is temporary storage, which will be overwritten, of the same type and size as `p`.
+Repeat callers are encouraged to pre-allocate temporary storage once, and call through
+`sqhist!(K, V, L, S, q, p)`
+
+# Examples
+```jldoctest
+julia> p = [2/15, 7/15, 6/15];
+
+julia> K = similar(p, Int); V = similar(p, Float64); q = zeros(3)
+3-element Vector{Float64}:
+ 0.0
+ 0.0
+ 0.0
+
+julia> sqhist!(K, V, q, p)
+([3, 2, 2], [0.13333333333333333, 0.6666666666666666, 0.8666666666666667])
+
+julia> q
+3-element Vector{Float64}:
+ 0.3333333333333333
+ 0.33333333333333337
+ 0.3333333333333333
+```
+"""
 sqhist!(K, V, q, p) = (n = length(p); sqhist!(K, V, Vector{Int}(undef, n), Vector{Int}(undef, n), q, p))
+
+"""
+    sqhist!(K::Vector{Int}, V::Vector{<:AbstractFloat}, p)
+
+Construct into `K` and `V` a square histogram given a vector of probabilities, `p`,
+which satisfies ∑ᵢpᵢ = 1 and 0 ≤ pᵢ ≤ 1 ∀i.
+Repeat callers are encouraged to pre-allocate temporary storage once, and call through
+`sqhist!(K, V, L, S, q, p)`
+
+# Examples
+```jldoctest
+julia> p = [2/15, 7/15, 6/15];
+
+julia> K = similar(p, Int); V = similar(p, Float64);
+
+julia> sqhist!(K, V, p)
+([3, 2, 2], [0.13333333333333333, 0.6666666666666666, 0.8666666666666667])
+```
+"""
 sqhist!(K, V, p) = sqhist!(K, V, similar(p), p)
 
+"""
+    sqhist(p::Vector{<:AbstractFloat})
+
+Construct a square histogram, given a vector of probabilities,
+`p`, which satisfies ∑ᵢpᵢ = 1 and 0 ≤ pᵢ ≤ 1 ∀i. This algorithm requires 𝒪(N) time, but
+may produce a square histogram which has frequent column pivots, leading to a reduction
+in generation efficiency due to increased probability of the `else` branch occurring.
+As all generation algorithms are vectorized, this will have no effect, as both branches
+will be evaluated unconditionally. Consequently, there is no penalty to using this algorithm.
+
+See also: [`sqhist!`](@ref)
+
+# Examples
+```jldoctest
+julia> p = [2/15, 7/15, 6/15];
+
+julia> sqhist(p)
+([3, 2, 2], [0.13333333333333333, 0.6666666666666666, 0.8666666666666667])
+```
+"""
 function sqhist(p::Vector{T}) where {T<:AbstractFloat}
     n = length(p)
     K, V, q = _sqhist_init(promote_type(T, Float64), n)
@@ -214,6 +375,22 @@ sqhist!(K::Vector{Int}, V::Vector{<:AbstractFloat}, n::Int) = sqhist!(resize!(K,
 
 ################
 # Interface -- for convenience of holding items together
+
+"""
+    SqHist(p)
+
+Construct a square histogram, given a vector of probabilities, `p`, which satisfies
+∑ᵢpᵢ = 1 and 0 ≤ pᵢ ≤ 1, using an 𝒪(N) algorithm. The resultant `K` and `V` are
+wrapped in a struct for subsequent usage.
+
+See also: [`sqhist`](@ref)
+
+# Examples
+julia> p = [2/15, 7/15, 6/15];
+
+julia> x = SqHist(p)
+SqHist{Int64, Float64}([3, 2, 2], [0.13333333333333333, 0.6666666666666666, 0.8666666666666667])
+"""
 struct SqHist{Ti<:Integer, Tv<:AbstractFloat}
     K::Vector{Ti}
     V::Vector{Tv}
