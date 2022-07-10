@@ -292,10 +292,63 @@ vgenerate(n::Int, dims::Tuple{}) = generate(n, ())
 
 ################################################################
 # Interface -- for convenience of sampling
+"""
+    generate(x::SqHist)
+    generate(x::SqHistEquiprobable)
+
+Generate a random category from the discrete distribution which corresponds to the
+squared histogram `x`.
+"""
 generate(x::SqHist) = generate(x.K, x.V)
+
+"""
+    generate(x::SqHist, dims::Tuple)
+    generate(x::SqHist, dims::Integer...)
+    generate(x::SqHistEquiprobable, dims::Tuple)
+    generate(x::SqHistEquiprobable, dims::Integer...)
+
+Generate an array of random categories from the discrete distribution given the
+squared histogram `x`.
+
+See also: [`generate!`](@ref)
+
+# Examples
+```julia-repl
+julia> p = [2/15, 7/15, 6/15]; x = SqHist(p);
+
+julia> generate(x, 1,2,3)
+1×2×3 Array{Int64, 3}:
+[:, :, 1] =
+ 1  2
+
+[:, :, 2] =
+ 3  3
+
+[:, :, 3] =
+ 1  2
+```
+"""
 generate(x::SqHist, dims::NTuple{N, Integer}) where {N} = generate(x.K, x.V, dims)
 generate(x::SqHist, dims::Vararg{Integer, N}) where {N} = generate(x, dims)
+
+"""
+    generate!(A, u::AbstractArray{Float64}, x::SqHist)
+    generate!(A, u::AbstractArray{Float64}, x::SqHistEquiprobable)
+
+Populate the array `A` with random categories drawn from the discrete distribution which
+corresponds to the squared histogram `x`. `u` is used as temporary storage
+for uniform(0,1) draws; it must be an array which has equal size as `A`.
+"""
 generate!(A, u, x::SqHist) = generate!(A, u, x.K, x.V)
+
+"""
+    generate!(A, x::SqHist)
+    generate!(A, x::SqHistEquiprobable)
+
+Populate the array `A` with random categories drawn from the discrete distribution which
+corresponds to the squared histogram `x`. Repeated callers are encouraged to
+pre-allocate temporary storage once, and call through `generate!(A, u, x)`.
+"""
 generate!(A, x::SqHist) = generate!(A, x.K, x.V)
 
 generate(x::SqHistEquiprobable) = generate(x.n)
@@ -304,9 +357,53 @@ generate(x::SqHistEquiprobable, dims::Vararg{Integer, N}) where {N} = generate(x
 generate!(A, u, x::SqHistEquiprobable) = generate!(A, u, x.n)
 generate!(A, x::SqHistEquiprobable) = generate!(A, x.n)
 
+"""
+    vgenerate(x::SqHist)
+    vgenerate(x::SqHistEquiprobable)
+
+Generate a random category from the discrete distribution which corresponds to the
+squared histogram `x`.
+"""
 vgenerate(x::SqHist) = vgenerate(x.K, x.V)
+
+"""
+    vgenerate(x::SqHist, dims::Tuple)
+    vgenerate(x::SqHist, dims::Integer...)
+    vgenerate(x::SqHistEquiprobable, dims::Tuple)
+    vgenerate(x::SqHistEquiprobable, dims::Integer...)
+
+Generate an array of random categories from the discrete distribution given the
+squared histogram `x`.
+
+See also: [`generate!`](@ref)
+
+# Examples
+```julia-repl
+julia> p = [2/15, 7/15, 6/15]; x = SqHist(p);
+
+julia> vgenerate(x, 1,2,3)
+1×2×3 Array{Int64, 3}:
+[:, :, 1] =
+ 2  3
+
+[:, :, 2] =
+ 2  2
+
+[:, :, 3] =
+ 1  2
+```
+"""
 vgenerate(x::SqHist, dims::NTuple{N, Integer}) where {N} = vgenerate(x.K, x.V, dims)
 vgenerate(x::SqHist, dims::Vararg{Integer, N}) where {N} = vgenerate(x, dims)
+
+"""
+    vgenerate!(A, x::SqHist)
+    vgenerate!(A, x::SqHistEquiprobable)
+
+Populate the array `A` with random categories drawn from the discrete distribution which
+corresponds to the squared histogram `x`. Repeated callers are encouraged to
+pre-allocate temporary storage once, and call through `vgenerate!(A, u, x)`.
+"""
 vgenerate!(A, u, x::SqHist) = vgenerate!(A, u, x.K, x.V)
 vgenerate!(A, x::SqHist) = vgenerate!(A, x.K, x.V)
 
