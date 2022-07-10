@@ -93,144 +93,15 @@ x[:]
 # size increases, non-chunked pulls ahead -- at 2^20, it is 11% faster.
 # In essence, if you have the memory to spare, then non-chunked is preferable.
 ## Thoughts
-# It could be offered as an option. It does impose the limitation that u must be ::Array{Float64}
-function option1!(A::AbstractArray, u::Array{Float64})
-    rand!(u)
-    @inbounds @simd ivdep for i ∈ eachindex(A, u)
-        A[i] = u[i]
-    end
-    A
-end
-function voption1!(A::AbstractArray, u::Array{Float64})
-    rand!(u)
-    @turbo for i ∈ eachindex(A, u)
-        A[i] = u[i]
-    end
-    A
-end
-
-function option2!(A::AbstractArray, u::Array{Float64})
-    n = length(A)
-    c = length(u)
-    q, r = divrem(n, c)
-    i₀ = firstindex(A)
-    f = i₀
-    l = f - 1
-    k = 1
-    while k ≤ q
-        f = l + 1
-        l += c
-        j = f:l
-        rand!(u)
-        @inbounds @simd for i ∈ eachindex(u)
-            A[j[i]] = u[i]
-        end
-        k += 1
-    end
-    if r != 0
-        f = l + 1
-        j = f:n
-        rand!(u)
-        @inbounds @simd for i ∈ eachindex(j)
-            A[j[i]] = u[i]
-        end
-    end
-    A
-end
-
-function voption2!(A::AbstractArray, u::Array{Float64})
-    n = length(A)
-    c = length(u)
-    q, r = divrem(n, c)
-    i₀ = firstindex(A)
-    f = i₀
-    l = f - 1
-    k = 1
-    while k ≤ q
-        f = l + 1
-        l += c
-        j = f:l
-        rand!(u)
-        @turbo for i ∈ eachindex(u)
-            A[j[i]] = u[i]
-        end
-        k += 1
-    end
-    if r != 0
-        f = l + 1
-        j = f:n
-        rand!(u)
-        @turbo for i ∈ eachindex(j)
-            A[j[i]] = u[i]
-        end
-    end
-    A
-end
-
-
-function option3!(A::AbstractArray, u::Array{Float64})
-    n = length(A)
-    c = length(u)
-    q, r = divrem(n, c)
-    i₀ = firstindex(A)
-    f = i₀
-    l = f - 1
-    k = 1
-    while k ≤ q
-        f = l + 1
-        l += c
-        j = f:l
-        rand!(u)
-        @inbounds for (i, i′) ∈ enumerate(j)
-            A[i′] = u[i]
-        end
-        k += 1
-    end
-    if r != 0
-        f = l + 1
-        j = f:n
-        rand!(u)
-        @inbounds for (i, i′) ∈ enumerate(j)
-            A[i′] = u[i]
-        end
-    end
-    A
-end
-
-
-
-function option4!(A::AbstractArray, u::Array{Float64})
-    n = length(A)
-    c = length(u)
-    q, r = divrem(n, c)
-    i₀ = firstindex(A)
-    f = i₀
-    l = f - 1
-    k = 1
-    while k ≤ q
-        f = l + 1
-        l += c
-        j = f
-        rand!(u)
-        @inbounds for i ∈ eachindex(u)
-            A[j] = u[i]
-            j += 1
-        end
-        k += 1
-    end
-    if r != 0
-        f = l + 1
-        j = f:n
-        rand!(u)
-        i = 1
-        @inbounds for j ∈ f:n
-            A[j] = u[i]
-            i += 1
-        end
-    end
-    A
-end
-
+# Chunked could be offered as an option. It does impose the limitation that u must be ::Array{Float64}
+# Furthermore, it makes it more difficult to guarantee safety, as non-unit stride A's
+# would be a mess.
+# Realistically, for repeated usage, it seems quite reasonable to ask callers to provide u
+# in an appropriate size. This makes it easy to guarantee safety. The only time I can imagine
+# it being perceived as a problem is if one want to sample an absurd number of draws in one
+# pass, but then, the memory required is not really so bad -- only 2x that required to store
+# the output.
+include("generation_variants.jl")
 
 A = rand(2^20);
 u1 = rand(length(A));
@@ -244,38 +115,18 @@ u2 = rand(2^10);
 @benchmark option3!($A, $u2)
 @benchmark option4!($A, $u2)
 
+A = Vector{Int}(undef, 2^15);
+u = rand(length(A));
+uc = rand(2^10);
 
-
-function generate_option2!(A::AbstractArray{<:Integer}, u::Array{Float64}, K::Vector{Int}, V::Vector{T}) where {T<:AbstractFloat}
-    n = length(A)
-    c = length(u)
-    q, r = divrem(n, c)
-    N = length(K)
-    checkbounds(V, N)
-    N == 1 && return fill!(A, @inbounds K[1])
-    i₀ = firstindex(A)
-    f = i₀
-    l = f - 1
-    k = 1
-    while k ≤ q
-        f = l + 1
-        l += c
-        j′ = f:l
-        rand!(u)
-        @inbounds @simd ivdep for i ∈ eachindex(u)
-            j = unsafe_trunc(Int, u[i] * N) + 1
-            A[j′[i]] = ifelse(u[i] < V[j], j, K[j])
-        end
-        k += 1
-    end
-    if r != 0
-        f = l + 1
-        j′ = f:n
-        rand!(u)
-        @inbounds @simd ivdep for i ∈ eachindex(j′)
-            j = unsafe_trunc(Int, u[i] * N) + 1
-            A[j′[i]] = ifelse(u[i] < V[j], j, K[j])
-        end
-    end
-    A
+for i = 1:10
+    n = 1 << i
+    p = normalize1!(rand(n))
+    K, V = sqhist(p)
+    println("generate!, n = ", n)
+    @btime generate!($A, $u, $K, $V)
+    println("generate_option2!, n = ", n)
+    @btime generate_option2!($A, $uc, $K, $V)
+    println("vgenerate!, n = ", n)
+    @btime vgenerate!($A, $u, $K, $V)
 end
