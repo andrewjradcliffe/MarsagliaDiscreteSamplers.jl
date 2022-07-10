@@ -10,15 +10,6 @@
 
 Generate a random category from the discrete distribution which corresponds to the
 squared histogram held in the category aliases, `K`, and division points, `V`.
-
-# Examples
-```julia-repl
-julia> p = [2/15, 7/15, 6/15]; K, V = sqhist(p)
-([3, 2, 2], [0.13333333333333333, 0.6666666666666666, 0.8666666666666667])
-
-julia> generate(K, V)
-3
-```
 """
 function generate(K::Vector{Int}, V::Vector{T}) where {T<:AbstractFloat}
     n = length(K)
@@ -83,8 +74,7 @@ See also: [`generate!`](@ref)
 
 # Examples
 ```julia-repl
-julia> p = [2/15, 7/15, 6/15]; K, V = sqhist(p)
-([3, 2, 2], [0.13333333333333333, 0.6666666666666666, 0.8666666666666667])
+julia> p = [2/15, 7/15, 6/15]; K, V = sqhist(p);
 
 julia> generate(K, V, 1,2,3)
 1×2×3 Array{Int64, 3}:
@@ -112,15 +102,6 @@ generate(K::Vector{Int}, V::Vector{<:AbstractFloat}, dims::Vararg{Integer, N}) w
 
 Generate a random category from the discrete distribution which corresponds to the
 squared histogram held in the category aliases, `K`, and division points, `V`.
-
-# Examples
-```julia-repl
-julia> p = [2/15, 7/15, 6/15]; K, V = sqhist(p)
-([3, 2, 2], [0.13333333333333333, 0.6666666666666666, 0.8666666666666667])
-
-julia> vgenerate(K, V)
-3
-```
 """
 vgenerate(K::Vector{Int}, V::Vector{<:AbstractFloat}) = generate(K, V)
 
@@ -166,8 +147,7 @@ See also: [`generate!`](@ref)
 
 # Examples
 ```julia-repl
-julia> p = [2/15, 7/15, 6/15]; K, V = sqhist(p)
-([3, 2, 2], [0.13333333333333333, 0.6666666666666666, 0.8666666666666667])
+julia> p = [2/15, 7/15, 6/15]; K, V = sqhist(p);
 
 julia> vgenerate(K, V, 1,2,3)
 1×2×3 Array{Int64, 3}:
@@ -196,12 +176,6 @@ vgenerate(K::Vector{Int}, V::Vector{<:AbstractFloat}, dims::Vararg{Integer, N}) 
 
 Generate a random category from the uniform discrete distribution which has
 support on `1` through `n` (inclusive).
-
-# Examples
-```julia-repl
-julia> generate(10)
-6
-```
 """
 function generate(n::Int)
     n > 0 || throw(ArgumentError("n must be > 0"))
@@ -238,7 +212,7 @@ generate!(A::AbstractArray, n::Int) = generate!(A, similar(A, Float64), n)
     generate(n::Int, dims::Tuple)
     generate(n::Int, dims::Integer...)
 
-Generate an array of random categories from the uniform discrete distribution which
+Generate an array of random categories from the uniform discrete distribution which has
 support on `1` through `n` (inclusive).
 
 See also: [`generate!`](@ref)
@@ -261,12 +235,6 @@ generate(n::Int, dims::Vararg{Integer, N}) where {N} = generate(n, dims)
 
 Generate a random category from the uniform discrete distribution which has
 support on `1` through `n` (inclusive).
-
-# Examples
-```julia-repl
-julia> vgenerate(10)
-8
-```
 """
 vgenerate(n::Int) = generate(n)
 
@@ -300,7 +268,7 @@ vgenerate!(A::AbstractArray, n::Int) = vgenerate!(A, similar(A, Float64), n)
     vgenerate(n::Int, dims::Tuple)
     vgenerate(n::Int, dims::Integer...)
 
-Vgenerate an array of random categories from the uniform discrete distribution which
+Generate an array of random categories from the uniform discrete distribution which has
 support on `1` through `n` (inclusive).
 
 See also: [`vgenerate!`](@ref)
