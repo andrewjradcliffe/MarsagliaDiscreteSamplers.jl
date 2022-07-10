@@ -21,10 +21,13 @@ end
 
 """
     generate!(A, u::AbstractArray{Float64}, K::Vector{Int}, V::Vector{<:AbstractFloat})
+    generate!(A, K::Vector{Int}, V::Vector{<:AbstractFloat})
 
 Populate the array `A` with random categories drawn from the discrete distribution which
-corresponds to the squared histogram `K` and `V`. `u` is used as temporary storage
+corresponds to the squared histogram `K` and `V`. If provided, `u` is used as temporary storage
 for uniform(0,1) draws; it must be an array which has equal size as `A`.
+If `u` is not provided, it will be allocated; repeated callers are encouraged to
+pre-allocate this temporary storage once in order to avoid unnecessary allocations.
 """
 function generate!(A::AbstractArray{<:Integer}, u::AbstractArray{Float64}, K::Vector{Int}, V::Vector{T}) where {T<:AbstractFloat}
     n = length(K)
@@ -53,14 +56,6 @@ function generate!(A::Array{<:Integer}, u::Array{Float64}, K::Vector{Int}, V::Ve
     end
     A
 end
-
-"""
-    generate!(A, K::Vector{Int}, V::Vector{<:AbstractFloat})
-
-Populate the array `A` with random categories drawn from the discrete distribution which
-corresponds to the squared histogram `K` and `V`. Repeated callers are encouraged to
-pre-allocate temporary storage once, and call through `generate!(A, u, K, V)`.
-"""
 generate!(A::AbstractArray{<:Integer}, K::Vector{Int}, V::Vector{T}) where {T<:AbstractFloat} = generate!(A, similar(A, Float64), K, V)
 
 """
@@ -107,10 +102,13 @@ vgenerate(K::Vector{Int}, V::Vector{<:AbstractFloat}) = generate(K, V)
 
 """
     vgenerate!(A, u::AbstractArray{Float64}, K::Vector{Int}, V::Vector{<:AbstractFloat})
+    vgenerate!(A, K::Vector{Int}, V::Vector{<:AbstractFloat})
 
 Populate the array `A` with random categories drawn from the discrete distribution which
-corresponds to the squared histogram `K` and `V`. `u` is used as temporary storage
+corresponds to the squared histogram `K` and `V`. If provided, `u` is used as temporary storage
 for uniform(0,1) draws; it must be an array which has equal size as `A`.
+If `u` is not provided, it will be allocated; repeated callers are encouraged to
+pre-allocate this temporary storage once in order to avoid unnecessary allocations.
 """
 function vgenerate!(A::AbstractArray{<:Integer}, u::AbstractArray{Float64}, K::Vector{Int}, V::Vector{T}) where {T<:AbstractFloat}
     n = length(K)
@@ -124,14 +122,6 @@ function vgenerate!(A::AbstractArray{<:Integer}, u::AbstractArray{Float64}, K::V
     end
     A
 end
-
-"""
-    vgenerate!(A, K::Vector{Int}, V::Vector{<:AbstractFloat})
-
-Populate the array `A` with random categories drawn from the discrete distribution which
-corresponds to the squared histogram `K` and `V`. Repeated callers are encouraged to
-pre-allocate temporary storage once, and call through `vgenerate!(A, u, K, V)`.
-"""
 vgenerate!(A::AbstractArray{<:Integer}, K::Vector{Int}, V::Vector{T}) where {T<:AbstractFloat} =
     vgenerate!(A, similar(A, Float64), K, V)
 
@@ -184,10 +174,13 @@ end
 
 """
     generate!(A, u::AbstractArray{Float64}, n::Int)
+    generate!(A, n::Int)
 
 Populate the array `A` with random categories drawn from the uniform discrete distribution
-which has support on `1` through `n` (inclusive). `u` is used as temporary storage
+which has support on `1` through `n` (inclusive). If provided, `u` is used as temporary storage
 for uniform(0,1) draws; it must be an array which has equal size as `A`.
+If `u` is not provided, it will be allocated; repeated callers are encouraged to
+pre-allocate this temporary storage once in order to avoid unnecessary allocations.
 """
 function generate!(A::AbstractArray{<:Integer}, u::AbstractArray{Float64}, n::Int)
     n > 0 || throw(ArgumentError("n must be > 0"))
@@ -198,14 +191,6 @@ function generate!(A::AbstractArray{<:Integer}, u::AbstractArray{Float64}, n::In
     end
     A
 end
-
-"""
-    generate!(A, n::Int)
-
-Populate the array `A` with random categories drawn from the uniform discrete distribution
-which has support on `1` through `n` (inclusive). Repeated callers are encouraged to
-pre-allocate temporary storage once, and call through `generate!(A, u, n)`.
-"""
 generate!(A::AbstractArray, n::Int) = generate!(A, similar(A, Float64), n)
 
 """
@@ -240,10 +225,13 @@ vgenerate(n::Int) = generate(n)
 
 """
     vgenerate!(A, u::AbstractArray{Float64}, n::Int)
+    vgenerate!(A, n::Int)
 
 Populate the array `A` with random categories drawn from the uniform discrete distribution
-which has support on `1` through `n` (inclusive). `u` is used as temporary storage
+which has support on `1` through `n` (inclusive). If provided, `u` is used as temporary storage
 for uniform(0,1) draws; it must be an array which has equal size as `A`.
+If `u` is not provided, it will be allocated; repeated callers are encouraged to
+pre-allocate this temporary storage once in order to avoid unnecessary allocations.
 """
 function vgenerate!(A::AbstractArray{<:Integer}, u::AbstractArray{Float64}, n::Int)
     n > 0 || throw(ArgumentError("n must be > 0"))
@@ -254,14 +242,6 @@ function vgenerate!(A::AbstractArray{<:Integer}, u::AbstractArray{Float64}, n::I
     end
     A
 end
-
-"""
-    vgenerate!(A, n::Int)
-
-Populate the array `A` with random categories drawn from the uniform discrete distribution
-which has support on `1` through `n` (inclusive). Repeated callers are encouraged to
-pre-allocate temporary storage once, and call through `vgenerate!(A, u, n)`.
-"""
 vgenerate!(A::AbstractArray, n::Int) = vgenerate!(A, similar(A, Float64), n)
 
 """
@@ -334,21 +314,16 @@ generate(x::SqHist, dims::Vararg{Integer, N}) where {N} = generate(x, dims)
 """
     generate!(A, u::AbstractArray{Float64}, x::SqHist)
     generate!(A, u::AbstractArray{Float64}, x::SqHistEquiprobable)
-
-Populate the array `A` with random categories drawn from the discrete distribution which
-corresponds to the squared histogram `x`. `u` is used as temporary storage
-for uniform(0,1) draws; it must be an array which has equal size as `A`.
-"""
-generate!(A, u, x::SqHist) = generate!(A, u, x.K, x.V)
-
-"""
     generate!(A, x::SqHist)
     generate!(A, x::SqHistEquiprobable)
 
 Populate the array `A` with random categories drawn from the discrete distribution which
-corresponds to the squared histogram `x`. Repeated callers are encouraged to
-pre-allocate temporary storage once, and call through `generate!(A, u, x)`.
+corresponds to the squared histogram `x`. If provided, `u` is used as temporary storage
+for uniform(0,1) draws; it must be an array which has equal size as `A`.
+If `u` is not provided, it will be allocated; repeated callers are encouraged to
+pre-allocate this temporary storage once in order to avoid unnecessary allocations.
 """
+generate!(A, u, x::SqHist) = generate!(A, u, x.K, x.V)
 generate!(A, x::SqHist) = generate!(A, x.K, x.V)
 
 generate(x::SqHistEquiprobable) = generate(x.n)
@@ -397,12 +372,16 @@ vgenerate(x::SqHist, dims::NTuple{N, Integer}) where {N} = vgenerate(x.K, x.V, d
 vgenerate(x::SqHist, dims::Vararg{Integer, N}) where {N} = vgenerate(x, dims)
 
 """
+    vgenerate!(A, u::AbstractArray{Float64}, x::SqHist)
+    vgenerate!(A, u::AbstractArray{Float64}, x::SqHistEquiprobable)
     vgenerate!(A, x::SqHist)
     vgenerate!(A, x::SqHistEquiprobable)
 
 Populate the array `A` with random categories drawn from the discrete distribution which
-corresponds to the squared histogram `x`. Repeated callers are encouraged to
-pre-allocate temporary storage once, and call through `vgenerate!(A, u, x)`.
+corresponds to the squared histogram `x`. If provided, `u` is used as temporary storage
+for uniform(0,1) draws; it must be an array which has equal size as `A`.
+If `u` is not provided, it will be allocated; repeated callers are encouraged to
+pre-allocate this temporary storage once in order to avoid unnecessary allocations.
 """
 vgenerate!(A, u, x::SqHist) = vgenerate!(A, u, x.K, x.V)
 vgenerate!(A, x::SqHist) = vgenerate!(A, x.K, x.V)
