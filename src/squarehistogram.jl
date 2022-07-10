@@ -226,13 +226,15 @@ end
 
 """
     sqhist!(K::Vector{Int}, V::Vector{<:AbstractFloat}, L::Vector{Int}, S::Vector{Int}, q, p)
+    sqhist!(K::Vector{Int}, V::Vector{<:AbstractFloat}, q, p)
+    sqhist!(K::Vector{Int}, V::Vector{<:AbstractFloat}, p)
 
 Construct into `K` and `V` a square histogram given a vector of probabilities, `p`,
 which satisfies ∑ᵢpᵢ = 1 and 0 ≤ pᵢ ≤ 1 ∀i.
 `L` and `S` are temporary storage, which will be overwritten, of the same size and type as `K`.
 `q` is temporary storage, which will be overwritten, of the same type and size as `p`.
 Repeat callers are encouraged to pre-allocate temporary storage once, and call through
-`sqhist!(K, V, L, S, q, p)`
+`sqhist!(K, V, L, S, q, p)`; otherwise, `L`, `S` and `q` will be allocated as needed.
 
 # Examples
 ```jldoctest
@@ -441,6 +443,28 @@ Base.:(==)(x::SqHistEquiprobable, y::SqHistEquiprobable) = x.n == y.n
 Base.hash(x::SqHistEquiprobable, h::UInt) = hash(x.n, h)
 
 # maybe?
-sqhist!(x::SqHist, L, S, q, p) = sqhist!(x.K, x.V, L, S, q, p)
-sqhist!(x::SqHist, q, p) = sqhist!(x.K, x.V, q, p)
-sqhist!(x::SqHist, p) = sqhist!(x.K, x.V, p)
+
+"""
+    sqhist!(x::SqHist, L::Vector{Int}, S::Vector{Int}, q, p)
+    sqhist!(x::SqHist, q, p)
+    sqhist!(x::SqHist, p)
+
+Overwrite the `K`, `V` in `x` with a square histogram constructed from the vector of
+probabilities, `p`, which satisfies ∑ᵢpᵢ = 1 and 0 ≤ pᵢ ≤ 1 ∀i.
+`L` and `S` are temporary storage, which will be overwritten, of the same size and type as `K`.
+`q` is temporary storage, which will be overwritten, of the same type and size as `p`.
+Repeat callers are encouraged to pre-allocate temporary storage once, and call through
+`sqhist!(x, L, S, q, p)`; otherwise, `L`, `S`, and `q` will be allocated as needed.
+
+# Examples
+```jldoctest
+julia> x = SqHist([2/15, 7/15, 6/15])
+SqHist{Int64, Float64}([3, 2, 2], [0.13333333333333333, 0.6666666666666666, 0.8666666666666667])
+
+julia> sqhist!(x, [10/15, 1/15, 4/15])
+SqHist{Int64, Float64}([1, 1, 1], [0.3333333333333333, 0.39999999999999997, 0.9333333333333333])
+```
+"""
+sqhist!(x::SqHist, L, S, q, p) = (sqhist!(x.K, x.V, L, S, q, p); x)
+sqhist!(x::SqHist, q, p) = (sqhist!(x.K, x.V, q, p); x)
+sqhist!(x::SqHist, p) = (sqhist!(x.K, x.V, p); x)
