@@ -193,8 +193,15 @@ end
     @test x.K == [1,2,3,4,5] && x.V == [0.2, 0.4, 0.6000000000000001, 0.8, 1.0]
     sqhist!(x, 3)
     @test x.K == [1,2,3] && x.V == [1/3, 2/3, 3/3]
+    #
+    resize!(x, 3)
+    p = [2/15, 6/15, 7/15]
+    sqhist!(x, p)
+    K, V = sqhist(p)
+    @test x.K == K && x.V == V
+    p = [.1, .1, .1, .7]
+    @test_throws DimensionMismatch sqhist!(x, p)
 end
-
 
 @testset "SqHistEquiprobable (type)" begin
     K, V = [1,2,3], [1/3, 2/3, 3/3]
