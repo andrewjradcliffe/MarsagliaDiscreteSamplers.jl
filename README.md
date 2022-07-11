@@ -16,8 +16,14 @@ probability mass of which is `pᵢ`; this corresponds to `x ~ Categorical(p)`.
 
 Any arbitrary discrete distribution may be sampled in this manner, as its probability mass function can be represented by a vector `p`. However, the draw(s) will need to be converted to whatever entity is indexed.
 The categorical distribution is the trivial case, as the conversion function is the identity function.
-If we take a slightly more complicated example, using the binomial distribution, e.g. Bin(3, 0.3), the probability mass function for which is `p(i, n, p) = binomial(n, i) * p^i * (1-p)^(n-i)`.
-This yields the probability vector `p = [1 * 0.7^3, 3 * 0.3 * 0.7^2, 3 * 0.3^2 * 0.7, 1 * 0.3^3]`.
+If we take a slightly more complicated example, using the binomial distribution, e.g. Bin(3, 0.3), the probability mass function for which is
+
+`p(i, n, p) = binomial(n, i) * p^i * (1-p)^(n-i)`
+
+This yields the probability vector
+
+`p = [1 * 0.7^3, 3 * 0.3 * 0.7^2, 3 * 0.3^2 * 0.7, 1 * 0.3^3]`
+
 The draws returned by the sampler will be ∈ {1,2,3,4}, as there are 4 "categories" of outcome defined by the pmf of Bin(3, 0.3). It just happens to be the case that a 1-indexed numbering scheme for categories produces this. In other words, the first category corresponds to 0, the second to 1, etc. The conversion function is simply `f(x) = x - 1`.
 
 At first glance, this may seem like a disadvantage, but it is in fact an advantage, as the sampler efficiency is not tied to any particular distribution. Consider a motivating example: Bin(100, 0.99),
@@ -32,6 +38,12 @@ It would be much more efficient to sample from `p′ = [p₁, p₂, p₁₀₀�
 
 ## Examples
 ### Bin(3, 0.3)
+
+<details>
+ <summaryClick me! ></summary>
+<p>
+
+
 
 ```julia
 julia> using MarsagliaDiscreteSamplers
