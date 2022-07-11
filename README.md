@@ -122,7 +122,7 @@ It is often beneficial, but not strictly necessary, to use only the points at wh
 ```julia
 julia> using MarsagliaDiscreteSamplers, SpecialFunctions, BenchmarkTools
 
-julia> pmf(i, n, p) = exp(loggamma(n + 1) - loggamma(i + 1) - loggamma(n - i + 1)) * p^i * (1-p)^(n-i);
+julia> pmf(i, n, p) = exp(loggamma(n+1) - loggamma(i+1) - loggamma(n-i+1)) * p^i * (1-p)^(n-i);
 
 julia> n = 100; p = 0.99;
 
