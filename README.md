@@ -451,3 +451,6 @@ N1 = 10000 N2 = 10000 K = 10000
 ```
 </p>
 </details>
+
+## References
+- Marsaglia, George, Wai Wan Tsang, and Jingbo Wang. "Fast generation of discrete random variables." Journal of Statistical Software 11 (2004): 1-11.
