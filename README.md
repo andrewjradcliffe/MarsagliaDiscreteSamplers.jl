@@ -21,7 +21,6 @@ If we take a slightly more complicated example, using the binomial distribution,
 `p(i, n, p) = binomial(n, i) * p^i * (1-p)^(n-i)`
 
 This yields the probability vector
-
 `p = [1 * 0.7^3, 3 * 0.3 * 0.7^2, 3 * 0.3^2 * 0.7, 1 * 0.3^3]`
 
 The draws returned by the sampler will be ∈ {1,2,3,4}, as there are 4 "categories" of outcome defined by the pmf of Bin(3, 0.3). It just happens to be the case that a 1-indexed numbering scheme for categories produces this. In other words, the first category corresponds to 0, the second to 1, etc. The conversion function is simply `f(x) = x - 1`.
