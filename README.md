@@ -16,19 +16,20 @@ probability mass of which is `pᵢ`; this corresponds to `x ~ Categorical(p)`.
 
 Any arbitrary discrete distribution may be sampled in this manner, as its probability mass function can be represented by a vector `p`. However, the draw(s) will need to be converted to whatever entity is indexed.
 The categorical distribution is the trivial case, as the conversion function is the identity function.
-If we take a slightly more complicated example, using the binomial distribution, e.g. Bin(3, 0.3), the probability mass function for which is
+If we take a slightly more complicated example, using the binomial distribution, e.g. `Binomial(3, 0.3)`, the probability mass function for which is
 
 `p(i, n, p) = binomial(n, i) * p^i * (1-p)^(n-i)`
 
 This yields the probability vector
+
 `p = [1 * 0.7^3, 3 * 0.3 * 0.7^2, 3 * 0.3^2 * 0.7, 1 * 0.3^3]`
 
 The draws returned by the sampler will be ∈ {1,2,3,4}, as there are 4 "categories" of outcome defined by the pmf of Bin(3, 0.3). It just happens to be the case that a 1-indexed numbering scheme for categories produces this. In other words, the first category corresponds to 0, the second to 1, etc. The conversion function is simply `f(x) = x - 1`.
 
-At first glance, this may seem like a disadvantage, but it is in fact an advantage, as the sampler efficiency is not tied to any particular distribution. Consider a motivating example: Bin(100, 0.99),
+At first glance, this may seem like a disadvantage, but it is in fact an advantage, as the sampler efficiency is not tied to any particular distribution. Consider a motivating example: `Binomial(100, 0.99)`,
 the probability mass function for which is negligible for all but a small subset of its support.
-One can sample from said distribution by providing the pmf evaluated on the subset of the support with non-negligible mass. Being generous, let us use the range 80:100, such that `p ∈ ℝ²¹` which will return `x ∈ 1:21`. The conversion function is then `f(x) = x + 79`.
-More generally, if the support of the Binomial is restricted to `l:u` using lower bound, `l ≥ 0`, and upper bound, `u ≤ n`, this produces a `p ∈ ℝᵘ⁻ˡ⁺¹`, returns `x ∈ 1:(u-l+1)` and the conversion function to the true support is `f(x) = x + l - 1`. One could view this as the composition of functions, `h = f ∘ g`, `f(x) = x - 1` (unrestricted support), `g(x) = x + l` (adjustment for restricted support).
+One can sample from said distribution by providing the pmf evaluated on the subset of the support with non-negligible mass. Being generous, let us use the range `80:100`, such that `p ∈ ℝ²¹` which will return `x ∈ 1:21`. The conversion function is then `f(x) = x + 79`.
+More generally, if the support of the binomial is restricted to `l:u` using lower bound, `l ≥ 0`, and upper bound, `u ≤ n`, this produces a `p ∈ ℝᵘ⁻ˡ⁺¹`, returns `x ∈ 1:(u-l+1)` and the conversion function to the true support is `f(x) = x + l - 1`. One could view this as the composition of functions, `h = f ∘ g`, `f(x) = x - 1` (unrestricted support), `g(x) = x + l` (adjustment for restricted support).
 This applies to the Poisson, negative binomial, geometric, hypergeometric, etc. distributions.
 
 Let us consider another example, applicable to any probability mass function which admits a sparse representation. The categorical distribution is selected for simplicity, but the approach is the same for any arbitrary pmf.
@@ -36,16 +37,15 @@ Consider `p ∈ ℝ¹⁰⁰⁰⁰`, with `p₁ = 0.3, p₂ = 0.2, p₁₀₀₀�
 It would be much more efficient to sample from `p′ = [p₁, p₂, p₁₀₀₀₀]`, and re-index the x's returned. To this end define `I = [1, 2, 10000]`. Now, `x ∈ 1:3` and one converts to the true category with `f(x) = I[x]`. Once one has the true category, `y = f(x)`, additional conversions (defined on the original support) can be applied.
 
 ## Examples
-### Bin(3, 0.3)
+### `Binomial(3, 0.3)`
 
 <details>
  <summaryClick me! ></summary>
 <p>
 
-
-
+The intent is to demonstrate the speed which can be achieved with Marsaglia's square histogram method.
 ```julia
-julia> using MarsagliaDiscreteSamplers
+julia> using MarsagliaDiscreteSamplers, BenchmarkTools
 
 julia> pmf(i, n, p) = binomial(n, i) * p^i * (1-p)^(n-i);
 
@@ -109,11 +109,18 @@ julia> p2 = histogram(w, label="Distributions");
 
 julia> savefig(plot(p1, p2), joinpath(pwd(), "binomials_$(n)_$(p).pdf"))
 ```
+</p>
+</details>
 
-### Bin(100, 0.99)
+### `Binomial(100, 0.99)`
 
+<details>
+ <summaryClick me! ></summary>
+<p>
+
+It is often beneficial, but not strictly necessary, to use only the points at which the pmf has non-negligible mass.
 ```julia
-julia> using MarsagliaDiscreteSamplers, SpecialFunctions
+julia> using MarsagliaDiscreteSamplers, SpecialFunctions, BenchmarkTools
 
 julia> pmf(i, n, p) = exp(loggamma(n + 1) - loggamma(i + 1) - loggamma(n - i + 1)) * p^i * (1-p)^(n-i);
 
@@ -196,11 +203,19 @@ julia> p2 = histogram(w, label="Distributions");
 
 julia> savefig(plot(p1, p2), joinpath(pwd(), "binomials_$(n)_$(p).pdf"))
 ```
+</p>
+</details>
 
-### Categorical([0.3, 0.2, 0, …, 0, 0.5])
+### `Categorical([0.3, 0.2, 0, …, 0, 0.5])`
 
+<details>
+ <summaryClick me! ></summary>
+<p>
+
+Far more efficient to sample from sparse pmf's using an approach such as below, though,
+one does not begin to truly realize the gains until `n` becomes larger than can be held in the L2 cache.
 ```julia
-julia> using MarsagliaDiscreteSamplers
+julia> using MarsagliaDiscreteSamplers, BenchmarkTools
 
 julia> n = 10^4
 
@@ -283,3 +298,156 @@ julia> unsafe_countcategory(w, n)[I]
  0.199998
  0.500174
 ```
+</p>
+</details>
+
+### Comparison to results from article itself
+
+<details>
+ <summaryClick me! ></summary>
+<p>
+
+In Section 6 of the article, 3 tables of comparisons are given. The following replicates those
+tables, using what is ultimately a simplification of "Method II" -- proceed straight to
+the square histogram method, skipping the alias table. It turns out that for a vectorized sampler,
+skipping the alias table portion of Method II yields faster code, as the square histogram step can be
+made branchless. Further testing is needed to determine under what circumstances the branch (alias table or square histogram) may be worthwhile.
+```
+julia> using MarsagliaDiscreteSamplers, Distributions, BenchmarkTools
+
+julia> n_sample = 10^8; A = Vector{Int}(undef, n_sample); U = similar(A, Float64);
+
+# Time required to draw 10^8 samples from Binomial
+
+julia> for n ∈ [20, 100, 1000, 10000, 100000]
+           println("n = ", n)
+           for ρ ∈ (.1, .4)
+               println("\t p = ", ρ)
+               d = Binomial(n, ρ)
+               p = map(n -> pdf(d, n), 0:n)
+               K, V = sqhist(p)
+               @btime generate!($A, $U, $K, $V)
+           end
+       end
+n = 20
+         p = 0.1
+  168.665 ms (0 allocations: 0 bytes)
+         p = 0.4
+  168.530 ms (0 allocations: 0 bytes)
+n = 100
+         p = 0.1
+  169.132 ms (0 allocations: 0 bytes)
+         p = 0.4
+  168.981 ms (0 allocations: 0 bytes)
+n = 1000
+         p = 0.1
+  169.180 ms (0 allocations: 0 bytes)
+         p = 0.4
+  169.197 ms (0 allocations: 0 bytes)
+n = 10000
+         p = 0.1
+  190.279 ms (0 allocations: 0 bytes)
+         p = 0.4
+  190.923 ms (0 allocations: 0 bytes)
+n = 100000
+         p = 0.1
+  318.831 ms (0 allocations: 0 bytes)
+         p = 0.4
+  315.848 ms (0 allocations: 0 bytes)
+  
+# Time required to draw 10^8 samples from Poisson
+
+julia> for λ ∈ [1, 10, 25, 100, 250, 1000]
+           println("λ = ", λ)
+           d = Poisson(λ)
+           p = map(n -> pdf(d, n), 0:max(1.5λ, 100))
+           K, V = sqhist(p)
+           @btime generate!($A, $U, $K, $V)
+       end
+
+λ = 1
+  169.456 ms (0 allocations: 0 bytes)
+λ = 10
+  169.094 ms (0 allocations: 0 bytes)
+λ = 25
+  168.813 ms (0 allocations: 0 bytes)
+λ = 100
+  168.890 ms (0 allocations: 0 bytes)
+λ = 250
+  169.144 ms (0 allocations: 0 bytes)
+λ = 1000
+  169.457 ms (0 allocations: 0 bytes)
+
+  
+# Time required to draw 10^8 samples from Hypergeometric
+# -- admittedly, not entirely clear that these are the parameterizations from the article
+# This assumes that N1 is number of draws, N2 the population size and K the number of success states
+
+julia> for (N1, N2, K) ∈ [(20, 20, 20), (100, 100, 20), (100, 100, 100), (100, 1000, 100),
+                          (1000, 1000, 100), (1000, 1000, 1000), (1000, 10000, 100),
+                          (1000, 10000, 1000), (10000, 10000, 1000), (10000, 10000, 10000)]
+           println("N1 = ", N1, " N2 = ", N2, " K = ", K)
+           𝑠, 𝑓, 𝑛 = K, N2 - K, N1
+           d = Hypergeometric(𝑠, 𝑓, 𝑛)
+           p = map(n -> pdf(d, n), support(d))
+           K, V = sqhist(p)
+           @btime generate!($A, $U, $K, $V)
+       end
+N1 = 20 N2 = 20 K = 20
+  62.897 ms (0 allocations: 0 bytes)
+N1 = 100 N2 = 100 K = 20
+  62.913 ms (0 allocations: 0 bytes)
+N1 = 100 N2 = 100 K = 100
+  62.929 ms (0 allocations: 0 bytes)
+N1 = 100 N2 = 1000 K = 100
+  170.922 ms (0 allocations: 0 bytes)
+N1 = 1000 N2 = 1000 K = 100
+  62.888 ms (0 allocations: 0 bytes)
+N1 = 1000 N2 = 1000 K = 1000
+  62.919 ms (0 allocations: 0 bytes)
+N1 = 1000 N2 = 10000 K = 100
+  170.938 ms (0 allocations: 0 bytes)
+N1 = 1000 N2 = 10000 K = 1000
+  171.234 ms (0 allocations: 0 bytes)
+N1 = 10000 N2 = 10000 K = 1000
+  62.914 ms (0 allocations: 0 bytes)
+N1 = 10000 N2 = 10000 K = 10000
+  62.889 ms (0 allocations: 0 bytes)
+  
+# It could alternatively be N1 the number of draws, N2 the number of failures and K the
+# number of success states -- this gives a more reasonable range of support.
+# Alas, the files attached to the paper seem to be missing the hypergeometric distribution
+
+julia> for (N1, N2, K) ∈ [(20, 20, 20), (100, 100, 20), (100, 100, 100), (100, 1000, 100),
+                          (1000, 1000, 100), (1000, 1000, 1000), (1000, 10000, 100),
+                          (1000, 10000, 1000), (10000, 10000, 1000), (10000, 10000, 10000)]
+           println("N1 = ", N1, " N2 = ", N2, " K = ", K)
+           𝑠, 𝑓, 𝑛 = K, N2, N1
+           d = Hypergeometric(𝑠, 𝑓, 𝑛)
+           p = map(n -> pdf(d, n), support(d))
+           K, V = sqhist(p)
+           @btime generate!($A, $U, $K, $V)
+       end
+N1 = 20 N2 = 20 K = 20
+  170.708 ms (0 allocations: 0 bytes)
+N1 = 100 N2 = 100 K = 20
+  170.384 ms (0 allocations: 0 bytes)
+N1 = 100 N2 = 100 K = 100
+  170.881 ms (0 allocations: 0 bytes)
+N1 = 100 N2 = 1000 K = 100
+  170.931 ms (0 allocations: 0 bytes)
+N1 = 1000 N2 = 1000 K = 100
+  170.873 ms (0 allocations: 0 bytes)
+N1 = 1000 N2 = 1000 K = 1000
+  170.993 ms (0 allocations: 0 bytes)
+N1 = 1000 N2 = 10000 K = 100
+  170.966 ms (0 allocations: 0 bytes)
+N1 = 1000 N2 = 10000 K = 1000
+  171.030 ms (0 allocations: 0 bytes)
+N1 = 10000 N2 = 10000 K = 1000
+  171.167 ms (0 allocations: 0 bytes)
+N1 = 10000 N2 = 10000 K = 10000
+  192.990 ms (0 allocations: 0 bytes)
+```
+</p>
+</details>
