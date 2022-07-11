@@ -1,5 +1,7 @@
 # Tests of square histogram construction
 
+import MarsagliaDiscreteSamplers: sqhist_robinhood!, sqhist_robinhood, vsqhist_robinhood!, vsqhist_robinhood
+
 @testset "sqhist: init" begin
     K, V, q = _sqhist_init(Float64, 3)
     @test typeof(K) === Vector{Int}
