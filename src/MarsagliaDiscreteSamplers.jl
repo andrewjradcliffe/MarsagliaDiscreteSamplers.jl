@@ -1,10 +1,16 @@
 module MarsagliaDiscreteSamplers
 
-using Random, Test, BenchmarkTools
+import Base: unsafe_trunc
+
+using Random
 using LoopVectorization
 
-export sqhist!, sqhist
+export SqHist, SqHistEquiprobable
 
+export sqhist!, sqhist, generate!, generate, vgenerate!, vgenerate
+
+include("utils.jl")
 include("squarehistogram.jl")
+include("generation.jl")
 
 end
