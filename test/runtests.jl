@@ -4,8 +4,8 @@ using Test
 
 const tests = [
     "squarehistogram.jl",
-    "generation.jl"
-    "utils.jl"
+    "generation.jl",
+    "utils.jl",
 ]
 for t in tests
     @testset "Test $t" begin
