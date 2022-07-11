@@ -312,7 +312,7 @@ tables, using what is ultimately a simplification of "Method II" -- proceed stra
 the square histogram method, skipping the alias table. It turns out that for a vectorized sampler,
 skipping the alias table portion of Method II yields faster code, as the square histogram step can be
 made branchless. Further testing is needed to determine under what circumstances the branch (alias table or square histogram) may be worthwhile.
-```
+```julia
 julia> using MarsagliaDiscreteSamplers, Distributions, BenchmarkTools
 
 julia> n_sample = 10^8; A = Vector{Int}(undef, n_sample); U = similar(A, Float64);
