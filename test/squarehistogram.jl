@@ -1,6 +1,6 @@
 # Tests of square histogram construction
 
-import MarsagliaDiscreteSamplers: sqhist_robinhood!, sqhist_robinhood, vsqhist_robinhood!, vsqhist_robinhood
+import MarsagliaDiscreteSamplers: sqhist_robinhood!, sqhist_robinhood, vsqhist_robinhood!, vsqhist_robinhood, _sqhist_init
 
 @testset "sqhist: init" begin
     K, V, q = _sqhist_init(Float64, 3)
