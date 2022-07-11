@@ -7,6 +7,10 @@ using Pkg
 Pkg.add("MarsagliaDiscreteSamplers")
 ```
 
+## Description
+
+An implementation of methods described in [Fast Generation of Discrete Random Variables](https://www.jstatsoft.org/article/view/v011i03). Performance compares favorably to extant discrete samplers and is agnostic to type of discrete distribution.
+
 ## Usage
 
 Given a discrete distribution defined by a probability table, `p ∈ ℝᴺ : ∑ᵢpᵢ = 1, 0 ≤ pᵢ ≤ 1`,
