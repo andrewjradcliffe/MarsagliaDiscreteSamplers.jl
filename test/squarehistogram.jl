@@ -169,6 +169,28 @@ end
         # K, V = sqhist(p)
         # isapprox(V[2:end], (inv(n+1)):(inv(n+1)):(1.0 - inv(n+1)), atol=10^-3)
     end
+
+    @testset "NaN handling (lack thereof)" begin
+        # Confirm bad behavior
+        K, V = sqhist([NaN])
+        @test K == [1]
+        @test V == [1.0]
+        K, V = sqhist([NaN, NaN])
+        @test K == [1, 2]
+        @test V == [0.5, 1.0]
+        K, V = sqhist([NaN, 1.0])
+        @test K == [2, 2]
+        @test all(V .=== [NaN, 1.0])
+        K, V = sqhist([1.0, NaN])
+        @test K == [1, 1]
+        @test all(V .=== [0.5, NaN])
+        K, V = sqhist([0.4, NaN, 0.6])
+        @test K == [1, 3, 1]
+        @test all(V .=== [1/3, NaN, NaN])
+        K, V = sqhist([NaN, 1.0, NaN])
+        @test K == [1, 2, 2]
+        @test all(V .=== [1/3, 2/3, NaN])
+    end
 end
 
 @testset "SqHist (type)" begin
